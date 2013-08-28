@@ -43,7 +43,8 @@ module IsParanoid
     # NOTE: this only works if is_paranoid is declared before has_many relationships.
     def has_many(association_id, options = {}, &extension)
        if options.key?(:through)
-        conditions = "#{options[:through].to_s.pluralize}.#{destroyed_field} #{is_or_equals_not_destroyed}"
+        table_name_interpolation = '#{self.class.reflect_on_association(' + association_id.inspect + ').through_reflection.quoted_table_name}'
+        conditions = "#{table_name_interpolation}.#{destroyed_field} #{is_or_equals_not_destroyed}"
         options[:conditions] = "(" + [options[:conditions], conditions].compact.join(") AND (") + ")"
       end
       super
