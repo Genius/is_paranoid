@@ -19,6 +19,9 @@ module IsParanoid
       warn "is_paranoid warning in class #{self}:  You should declare is_paranoid before your associations"
     end
 
+    class_inheritable_accessor :run_delayed_jobs_on_destroyed_instances
+    self.run_delayed_jobs_on_destroyed_instances = !!opts[:run_delayed_jobs_on_destroyed_instances]
+
     # This is the real magic. All calls made to this model will append
     # the conditions deleted_at => nil (or whatever your destroyed_field
     # and field_not_destroyed are). All exceptions require using
