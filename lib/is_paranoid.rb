@@ -157,7 +157,7 @@ module IsParanoid
       # this is rather hacky, suggestions for improvements appreciated... the idea
       # is that when the caller includes the method preload_associations, we want
       # to apply our is_paranoid conditions
-      if caller.any?{|c| c =~ /\d+:in `preload_associations'$/}
+      if caller.any? { |c| c =~ /\d+:in `preload_associations'$/} && caller.none? { |c| c =~ /\d+:in `\w+_with_destroyed'$/ }
         method_scoping.deep_merge!(:find => {:conditions => {destroyed_field => field_not_destroyed} })
       end
       super method_scoping, &block
