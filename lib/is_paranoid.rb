@@ -10,6 +10,18 @@ module IsParanoid
   # end
   #
 
+  def self.disabled?
+    !!@disabled
+  end
+
+  def self.disable
+    was_disabled = @disabled
+    @disabled = true
+    yield
+  ensure
+    @disabled = was_disabled
+  end
+
   def is_paranoid opts = {}
     opts[:field] ||= [:deleted_at, Proc.new{Time.now.utc}, nil]
     class_inheritable_accessor :destroyed_field, :field_destroyed, :field_not_destroyed
@@ -44,7 +56,8 @@ module IsParanoid
     def has_many(association_id, options = {}, &extension)
        if options.key?(:through)
         conditions = "#{options[:through].to_s.pluralize}.#{destroyed_field} #{is_or_equals_not_destroyed}"
-        options[:conditions] = "(" + [options[:conditions], conditions].compact.join(") AND (") + ")"
+        full_conditions = "(" + [options[:conditions], conditions].compact.join(") AND (") + ")"
+        options[:conditions] = "\#{IsParanoid.disabled? ? #{options[:conditions].inspect} : #{full_conditions.inspect}}"
       end
       super
     end
@@ -154,10 +167,19 @@ module IsParanoid
       # this is rather hacky, suggestions for improvements appreciated... the idea
       # is that when the caller includes the method preload_associations, we want
       # to apply our is_paranoid conditions
-      if caller.any?{|c| c =~ /\d+:in `preload_associations'$/}
+      if !IsParanoid.disabled? && caller.any?{|c| c =~ /\d+:in `preload_associations'$/}
         method_scoping.deep_merge!(:find => {:conditions => {destroyed_field => field_not_destroyed} })
       end
       super method_scoping, &block
+    end
+
+    def current_scoped_methods
+      methods = super
+      if IsParanoid.disabled? && methods.try(:[], :find).try(:[], :conditions).is_a?(Hash)
+        methods = Marshal.load(Marshal.dump(methods))
+        methods[:find][:conditions].delete(:deleted_at)
+      end
+      methods
     end
 
     protected
