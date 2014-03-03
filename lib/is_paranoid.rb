@@ -268,6 +268,10 @@ module IsParanoid
     # the Model.destroy(id), we don't need to specify those methods
     # separately.
     def destroy
+      with_transaction_returning_status(:destroy_with_paranoia)
+    end
+
+    def destroy_with_paranoia
       return false if callback(:before_destroy) == false
       result = alt_destroy_without_callbacks
       callback(:after_destroy)
