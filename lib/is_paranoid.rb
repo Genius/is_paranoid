@@ -275,6 +275,7 @@ module IsParanoid
       return false if callback(:before_destroy) == false
       result = alt_destroy_without_callbacks
       callback(:after_destroy)
+      @destroyed = true
       self
     end
 
