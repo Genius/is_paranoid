@@ -22,6 +22,23 @@ module IsParanoid
     @disabled = was_disabled
   end
 
+  def self.time_travel_to(date)
+    previous_time_travel = time_traveling_to
+
+    Thread.current[:is_paranoid_time_travel_to] = date
+    yield
+  ensure
+    Thread.current[:is_paranoid_time_travel_to] = previous_time_travel
+  end
+
+  def self.time_traveling?
+    !!time_traveling_to
+  end
+
+  def self.time_traveling_to
+    Thread.current[:is_paranoid_time_travel_to]
+  end
+
   def is_paranoid opts = {}
     opts[:field] ||= [:deleted_at, Proc.new{Time.now.utc}, nil]
     class_inheritable_accessor :destroyed_field, :field_destroyed, :field_not_destroyed
@@ -54,10 +71,9 @@ module IsParanoid
     # ensure that we respect the is_paranoid conditions when being loaded as a has_many :through
     # NOTE: this only works if is_paranoid is declared before has_many relationships.
     def has_many(association_id, options = {}, &extension)
-       if options.key?(:through)
-        paranoid_conditions = "#{options[:through].to_s.pluralize}.#{destroyed_field} #{is_or_equals_not_destroyed}"
-        full_conditions = "(" + [options[:conditions], paranoid_conditions].compact.join(") AND (") + ")"
-        options[:conditions] = "\#{IsParanoid.disabled? ? #{options.fetch(:conditions, '1=1').inspect} : #{full_conditions.inspect}}"
+      if options.key?(:through)
+        conditions = options.key?(:conditions) ? options[:conditions].to_s.inspect : 'nil'
+        options[:conditions] = "\#{is_paranoid_through_conditions(#{options[:through].to_s.inspect}, #{conditions})}"
       end
       super
     end
@@ -175,14 +191,25 @@ module IsParanoid
 
     def current_scoped_methods
       methods = super
-      if IsParanoid.disabled? && methods.try(:[], :find).try(:[], :conditions).is_a?(Hash)
-        methods = Marshal.load(Marshal.dump(methods))
-        methods[:find][:conditions].delete(:deleted_at)
+      if methods.try(:[], :find).try(:[], :conditions).is_a?(Hash)
+        if IsParanoid.disabled?
+          methods = Marshal.load(Marshal.dump(methods))
+          methods[:find][:conditions].delete(destroyed_field)
+        elsif IsParanoid.time_traveling?
+          methods = Marshal.load(Marshal.dump(methods))
+          methods[:find][:conditions].delete(:deleted_at)
+          methods[:find][:conditions] = merge_conditions(methods[:find][:conditions], is_paranoid_time_travel_conditions)
+        end
       end
+
       methods
     end
 
     protected
+
+    def is_paranoid_time_travel_conditions
+      "#{quoted_table_name}.#{destroyed_field} #{is_or_equals_not_destroyed} OR #{quoted_table_name}.#{destroyed_field} > #{connection.quote(IsParanoid.time_traveling_to)}"
+    end
 
     def should_restore?(association_name, dependent_relationship, options) #:nodoc:
       ([*options[:include]] || []).include?(association_name) or
@@ -233,7 +260,7 @@ module IsParanoid
 	                }                                       #     }
 	              )                                         #   )
 	            end                                         # end
-	
+
 						else
                                                           # Example:
 	            define_method name do |*args|               # def android_with_destroyed
@@ -284,6 +311,23 @@ module IsParanoid
     def restore(options = {})
       self.class.restore(id, options)
       self
+    end
+
+    def is_paranoid_through_conditions(through, original_conditions)
+      paranoid_conditions =
+        if IsParanoid.time_traveling?
+          "#{through.to_s.pluralize}.#{self.class.destroyed_field} #{self.class.is_or_equals_not_destroyed} OR #{through.to_s.pluralize}.#{self.class.destroyed_field} > #{connection.quote(IsParanoid.time_traveling_to)}"
+        else
+          "#{through.to_s.pluralize}.#{self.class.destroyed_field} #{self.class.is_or_equals_not_destroyed}"
+        end
+
+      full_conditions = "(" + [original_conditions, paranoid_conditions].compact.join(") AND (") + ")"
+
+      if IsParanoid.disabled?
+        original_conditions || '1=1'
+      else
+        full_conditions
+      end
     end
 
   end
