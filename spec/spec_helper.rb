@@ -1,6 +1,8 @@
 require 'rubygems'
 require "#{File.dirname(__FILE__)}/../lib/is_paranoid"
 require 'activerecord'
+require 'rails2_ruby2'
+require 'rails2_ruby2/rails_init'
 require 'yaml'
 require 'spec'
 
