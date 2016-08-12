@@ -8,6 +8,7 @@ describe IsParanoid do
     Android.delete_all
     Person.delete_all
     Component.delete_all
+    Dent.delete_all
 
     @luke = Person.create(:name => LUKE)
     @r2d2 = Android.create(:name => 'R2D2', :owner_id => @luke.id)
@@ -314,6 +315,62 @@ describe IsParanoid do
     it "should destroy without problem" do
       uuid = Uuid.create(:name => "foo")
       uuid.destroy.should be_true
+    end
+  end
+
+  describe "disable" do
+    it 'should return deleted records' do
+      Android.destroy(@r2d2.id)
+      IsParanoid.disable { Android.find_by_id(@r2d2.id) }.should == @r2d2
+      Android.find_by_id(@r2d2.id).should be_nil
+    end
+
+    it 'should return deleted through associations' do
+      dent = @r2d2.dents.create
+      ding = dent.dings.create
+      ding.destroy
+
+      @r2d2.dings.first.should be_nil
+      IsParanoid.disable { @r2d2.dings.first }.should == ding
+    end
+
+    it 'should preload deleted associations' do
+      dent = @r2d2.dents.create
+      dent.destroy
+
+      Android.first(:conditions => {:id => @r2d2.id}, :include => :dents).dents.first.should be_nil
+      IsParanoid.disable { Android.first(:conditions => {:id => @r2d2.id}, :include => :dents).dents.first }.should == dent
+    end
+  end
+
+  describe 'time_travel_to' do
+    before do
+      dents = 3.times.map { @r2d2.dents.create.tap { |d| d.scratches.create } }
+      dents.each(&:destroy)
+      dents.first.update_attribute(:deleted_at, 7.days.ago)
+    end
+
+    it 'should return only records deleted as of that time' do
+      IsParanoid.time_travel_to(1.day.ago) { Dent.count }.should == 2
+      Dent.count.should == 0
+      Dent.count_destroyed_only.should == 3
+    end
+
+    it 'should include only records deleted as of that time' do
+      IsParanoid.time_travel_to(1.day.ago) do
+        Android.first(:conditions => {:id => @r2d2.id}, :include => :dents).dents.length
+      end.should == 2
+
+      @r2d2.reload.dents.length.should == 0
+    end
+
+    it 'should time travel with through associations' do
+      IsParanoid.time_travel_to(7.days.ago) { @r2d2.scratches.count }.should == 2
+
+      scratch = IsParanoid.time_travel_to(7.days.ago) { @r2d2.scratches.first }
+      scratch.update_attribute(:deleted_at, 7.days.ago)
+
+      IsParanoid.time_travel_to(7.days.ago) { @r2d2.scratches.count }.should == 1
     end
   end
 end
