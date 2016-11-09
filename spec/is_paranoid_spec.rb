@@ -146,6 +146,18 @@ describe IsParanoid do
       }.should change(Android, :count_with_destroyed).from(2).to(0)
     end
 
+    it "should respect scopes" do
+      lambda{
+        Android.scoped(conditions: {id: Android.first.id}).delete_all
+      }.should change(Android, :count_with_destroyed).from(2).to(1)
+    end
+
+    it "should accept conditions" do
+      lambda{
+        Android.delete_all(id: Android.first.id)
+      }.should change(Android, :count_with_destroyed).from(2).to(1)
+    end
+
     it "should actually remove records on #delete" do
       lambda{
         Android.first.delete
