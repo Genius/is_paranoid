@@ -68,7 +68,7 @@ module IsParanoid
     # delete method in each instance, we don't need to specify those
     # methods separately
     def delete_all conditions = nil
-      self.with_exclusive_scope { super conditions }
+      IsParanoid.disable { super }
     end
 
     # Use update_all with an exclusive scope to restore undo the soft-delete.
