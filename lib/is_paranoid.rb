@@ -55,9 +55,13 @@ module IsParanoid
     # NOTE: this only works if is_paranoid is declared before has_many relationships.
     def has_many(association_id, options = {}, &extension)
        if options.key?(:through)
-        paranoid_conditions = "#{options[:through].to_s.pluralize}.#{destroyed_field} #{is_or_equals_not_destroyed}"
+        paranoid_conditions = "\#{self.class.reflect_on_association(#{options[:through].inspect}).quoted_table_name}.#{destroyed_field} #{is_or_equals_not_destroyed}"
         full_conditions = "(" + [options[:conditions], paranoid_conditions].compact.join(") AND (") + ")"
-        options[:conditions] = "\#{IsParanoid.disabled? ? #{options.fetch(:conditions, '1=1').inspect} : #{full_conditions.inspect}}"
+        options[:conditions] = %{\#{
+          IsParanoid.disabled? ?
+            interpolate_sql(self.class.send(:sanitize_sql, #{options.fetch(:conditions, '1=1').inspect})) :
+            interpolate_sql(self.class.send(:sanitize_sql, #{full_conditions.inspect}))
+        }}
       end
       super
     end
