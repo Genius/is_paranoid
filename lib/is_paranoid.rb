@@ -38,7 +38,14 @@ module IsParanoid
 
   def is_paranoid opts = {}
     opts[:field] ||= [:deleted_at, Proc.new{Time.now.utc}, nil]
-    class_inheritable_accessor :destroyed_field, :field_destroyed, :field_not_destroyed
+
+    inheritable_attrs = [:destroyed_field, :field_destroyed, :field_not_destroyed]
+    if IsParanoid.activerecord_2?
+      class_inheritable_accessor *inheritable_attrs
+    else
+      class_attribute *inheritable_attrs
+    end
+
     self.destroyed_field, self.field_destroyed, self.field_not_destroyed = opts[:field]
 
     if self.reflect_on_all_associations.size > 0 && ! opts[:suppress_load_order_warning]
