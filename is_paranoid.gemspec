@@ -44,10 +44,6 @@ Gem::Specification.new do |s|
      "spec/spec_helper.rb"
   ]
 
-  s.add_development_dependency "rspec", "1.3.2"
-  s.add_development_dependency "rails", "~> 2.3.18"
-  s.add_development_dependency 'sqlite3'
-
   if s.respond_to? :specification_version then
     current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
     s.specification_version = 3
