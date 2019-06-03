@@ -57,7 +57,11 @@ module IsParanoid
        if options.key?(:through)
         paranoid_conditions = "#{options[:through].to_s.pluralize}.#{destroyed_field} #{is_or_equals_not_destroyed}"
         full_conditions = "(" + [options[:conditions], paranoid_conditions].compact.join(") AND (") + ")"
-        options[:conditions] = "\#{IsParanoid.disabled? ? #{options.fetch(:conditions, '1=1').inspect} : #{full_conditions.inspect}}"
+        if Gem::Version.new(Rails::VERSION::STRING) >= Gem::Version.new('3.2.22')
+          options[:conditions] = proc { IsParanoid.disabled? ? options.fetch(:conditions, '1=1').inspect : full_conditions.inspect }
+        else
+          options[:conditions] = "\#{IsParanoid.disabled? ? #{options.fetch(:conditions, '1=1').inspect} : #{full_conditions.inspect}}"
+        end
       end
       super
     end
@@ -233,7 +237,7 @@ module IsParanoid
 	                }                                       #     }
 	              )                                         #   )
 	            end                                         # end
-	
+
 						else
                                                           # Example:
 	            define_method name do |*args|               # def android_with_destroyed
