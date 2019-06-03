@@ -295,7 +295,13 @@ module IsParanoid
     # the Model.destroy(id), we don't need to specify those methods
     # separately.
     def destroy
-      with_transaction_returning_status(:destroy_with_paranoia)
+      if IsParanoid.activerecord_2?
+        with_transaction_returning_status(:destroy_with_paranoia)
+      else
+        with_transaction_returning_status do
+          destroy_with_paranoia
+        end
+      end
     end
 
     def destroy_with_paranoia
