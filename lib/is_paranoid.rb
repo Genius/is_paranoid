@@ -22,6 +22,20 @@ module IsParanoid
     @disabled = was_disabled
   end
 
+  def self.activerecord_2?
+    loaded_gemspec =  Gem.loaded_specs["activerecord"]
+    if loaded_gemspec
+      Gem::Dependency.new('activerecord', '~> 2.3').match?(loaded_gemspec)
+    end
+  end
+
+  def self.activerecord_3?
+    loaded_gemspec =  Gem.loaded_specs["activerecord"]
+    if loaded_gemspec
+      Gem::Dependency.new('activerecord', '~> 3.2').match?(loaded_gemspec)
+    end
+  end
+
   def is_paranoid opts = {}
     opts[:field] ||= [:deleted_at, Proc.new{Time.now.utc}, nil]
     class_inheritable_accessor :destroyed_field, :field_destroyed, :field_not_destroyed
@@ -57,10 +71,12 @@ module IsParanoid
        if options.key?(:through)
         paranoid_conditions = "#{options[:through].to_s.pluralize}.#{destroyed_field} #{is_or_equals_not_destroyed}"
         full_conditions = "(" + [options[:conditions], paranoid_conditions].compact.join(") AND (") + ")"
-        if Gem::Version.new(Rails::VERSION::STRING) >= Gem::Version.new('3.2.22')
+        if IsParanoid.activerecord_2?
+          options[:conditions] = "\#{IsParanoid.disabled? ? #{options.fetch(:conditions, '1=1').inspect} : #{full_conditions.inspect}}"
+        elsif IsParanoid.activerecord_3?
           options[:conditions] = proc { IsParanoid.disabled? ? options.fetch(:conditions, '1=1').inspect : full_conditions.inspect }
         else
-          options[:conditions] = "\#{IsParanoid.disabled? ? #{options.fetch(:conditions, '1=1').inspect} : #{full_conditions.inspect}}"
+          raise NotImplementedError, "has_many has not been defined yet for this version of ActiveRecord."
         end
       end
       super
