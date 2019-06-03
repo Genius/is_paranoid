@@ -4,8 +4,8 @@ require 'bundler/setup'
 Bundler.require :default
 
 require "#{File.dirname(__FILE__)}/../lib/is_paranoid"
-require 'rails'
 require 'active_record'
+require 'active_support/all'
 require 'yaml'
 require 'spec'
 

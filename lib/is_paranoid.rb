@@ -57,7 +57,11 @@ module IsParanoid
     # and field_not_destroyed are). All exceptions require using
     # exclusive_scope (see self.delete_all, self.count_with_destroyed,
     # and self.find_with_destroyed defined in the module ClassMethods)
-    default_scope :conditions => {destroyed_field => field_not_destroyed}
+    default_scope do
+      unless IsParanoid.disabled?
+        where(destroyed_field => field_not_destroyed)
+      end
+    end
 
     extend ClassMethods
     include InstanceMethods
@@ -133,7 +137,7 @@ module IsParanoid
           dependent_relationship = association.macro.to_s =~ /^has/
           if should_restore?(association.name, dependent_relationship, options)
             if dependent_relationship
-              restore_related(association.klass, association.primary_key_name, id, options)
+              restore_related(association.klass, association.foreign_key, id, options)
             else
               restore_related(
                 association.klass,
@@ -255,7 +259,7 @@ module IsParanoid
 	            define_method name do |*args|               # def android_with_destroyed
 	              parent_klass.send("#{parent_method}",     #   Android.all_with_destroyed(
 	                :conditions => {                        #     :conditions => {
-	                  assoc.primary_key_name =>             #       :person_id =>
+	                  assoc.foreign_key =>             #       :person_id =>
 	                    self.send(parent_klass.primary_key) #         self.send(:id)
 	                }                                       #     }
 	              )                                         #   )
@@ -267,7 +271,7 @@ module IsParanoid
 	              parent_klass.first_with_destroyed(        #   Android.first_with_destroyed(
 	                :conditions => {                        #     :conditions => {
 	                  parent_klass.primary_key =>           #       :id =>
-	                    self.send(assoc.primary_key_name)   #         self.send(:android_id)
+	                    self.send(assoc.foreign_key)   #         self.send(:android_id)
 	                }                                       #     }
 	              )                                         #   )
 	            end                                         # end
@@ -305,9 +309,15 @@ module IsParanoid
     end
 
     def destroy_with_paranoia
-      return false if callback(:before_destroy) == false
-      result = alt_destroy_without_callbacks
-      callback(:after_destroy)
+      if IsParanoid.activerecord_3?
+        run_callbacks(:destroy) do
+          alt_destroy_without_callbacks
+        end
+      else
+        return false if callback(:before_destroy) == false
+        result = alt_destroy_without_callbacks
+        callback(:after_destroy)
+      end
       @destroyed = true
       self
     end
