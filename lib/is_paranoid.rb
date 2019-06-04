@@ -85,7 +85,7 @@ module IsParanoid
         if IsParanoid.activerecord_2?
           options[:conditions] = "\#{IsParanoid.disabled? ? #{options.fetch(:conditions, '1=1').inspect} : #{full_conditions.inspect}}"
         elsif IsParanoid.activerecord_3?
-          options[:conditions] = proc { IsParanoid.disabled? ? options.fetch(:conditions, '1=1').inspect : full_conditions.inspect }
+          options[:conditions] = proc { IsParanoid.disabled? ? options.fetch(:conditions, '1=1') : full_conditions }
         else
           raise NotImplementedError, "has_many has not been defined yet for this version of ActiveRecord."
         end
