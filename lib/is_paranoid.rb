@@ -142,7 +142,7 @@ module IsParanoid
               restore_related(
                 association.klass,
                 association.klass.primary_key,
-                find(id).send(association.primary_key_name),
+                find(id).send(association.foreign_key),
                 options
               )
             end
