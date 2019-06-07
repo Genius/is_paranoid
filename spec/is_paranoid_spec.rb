@@ -5,9 +5,7 @@ LUKE = 'Luke Skywalker'
 
 describe IsParanoid do
   before(:each) do
-    Android.delete_all
-    Person.delete_all
-    Component.delete_all
+    ActiveRecord::Base.subclasses.each { |klass| klass.delete_all }
 
     Component.create!(
       :name => <<~NAME
