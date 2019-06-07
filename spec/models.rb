@@ -91,7 +91,7 @@ end
 class Ninja < ActiveRecord::Base #:nodoc:
   validates_uniqueness_of :name, :scope => :visible
   is_paranoid :field => [:visible, false, true]
-  
+
   alias_method :vanish, :destroy
 end
 
@@ -106,6 +106,7 @@ end
 
 class RandomPirate < ActiveRecord::Base #:nodoc:
   set_table_name :pirates
+  after_destroy :after_destroy
 
   def after_destroy
     raise 'after_destroy works'
@@ -116,6 +117,8 @@ class UndestroyablePirate < ActiveRecord::Base #:nodoc:
   set_table_name :pirates
   is_paranoid :field => [:alive, false, true]
 
+  before_destroy :before_destroy
+
   def before_destroy
     false
   end
@@ -123,6 +126,8 @@ end
 
 class Uuid < ActiveRecord::Base #:nodoc:
   set_primary_key "uuid"
+
+  before_create :before_create
 
   def before_create
     self.uuid = "295b3430-85b8-012c-cfe4-002332cf7d5e"
