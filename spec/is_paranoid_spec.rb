@@ -72,6 +72,14 @@ describe IsParanoid do
         @luke.androids.size.should == 1
       end
 
+      it 'should find soft-deleted associations when using an IsParanoid.disable block' do
+        @r2d2.destroy
+        IsParanoid.disable do
+          @luke.androids.size.should == 2
+          @luke.androids.include?(@r2d2).should be_true
+        end
+      end
+
       it "should soft-delete on dependent destroys" do
         lambda{
           @luke.destroy
@@ -128,6 +136,18 @@ describe IsParanoid do
       Android.should_not_receive(:find)
       person.androids.size.should == 1
     end
+
+    it 'should find destroyed models when using an IsParanoid.disabled block' do
+      @r2d2.destroy
+
+      Android.where(name: @r2d2.name).first.should be_blank
+
+      IsParanoid.disable do
+        Android.where(name: @r2d2.name).first.should_not be_blank
+      end
+
+      Android.where(name: @r2d2.name).first.should be_blank
+    end
   end
 
   describe 'calculations' do
@@ -143,6 +163,18 @@ describe IsParanoid do
       Android.sum('id').should == @c3p0.id
       Android.sum_with_destroyed('id').should == @r2d2.id + @c3p0.id
       Android.average_with_destroyed('id').should == (@r2d2.id + @c3p0.id) / 2.0
+    end
+
+    it 'should have a proper count when using an IsParanoid.disabled block' do
+      @r2d2.destroy
+      @c3p0.destroy
+
+      Android.count.should == 0
+      Android.count_with_destroyed.should == 2
+
+      IsParanoid.disable do
+        Android.count.should == 2
+      end
     end
   end
 
