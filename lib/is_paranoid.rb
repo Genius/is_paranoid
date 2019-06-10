@@ -22,30 +22,9 @@ module IsParanoid
     @disabled = was_disabled
   end
 
-  def self.activerecord_2?
-    loaded_gemspec =  Gem.loaded_specs["activerecord"]
-    if loaded_gemspec
-      Gem::Dependency.new('activerecord', '~> 2.3').match?(loaded_gemspec)
-    end
-  end
-
-  def self.activerecord_3?
-    loaded_gemspec =  Gem.loaded_specs["activerecord"]
-    if loaded_gemspec
-      Gem::Dependency.new('activerecord', '~> 3.2').match?(loaded_gemspec)
-    end
-  end
-
   def is_paranoid opts = {}
     opts[:field] ||= [:deleted_at, Proc.new{Time.now.utc}, nil]
-
-    inheritable_attrs = [:destroyed_field, :field_destroyed, :field_not_destroyed]
-    if IsParanoid.activerecord_2?
-      class_inheritable_accessor *inheritable_attrs
-    else
-      class_attribute *inheritable_attrs
-    end
-
+    class_attribute :destroyed_field, :field_destroyed, :field_not_destroyed
     self.destroyed_field, self.field_destroyed, self.field_not_destroyed = opts[:field]
 
     if self.reflect_on_all_associations.size > 0 && ! opts[:suppress_load_order_warning]
@@ -82,13 +61,7 @@ module IsParanoid
        if options.key?(:through)
         paranoid_conditions = "#{options[:through].to_s.pluralize}.#{destroyed_field} #{is_or_equals_not_destroyed}"
         full_conditions = "(" + [options[:conditions], paranoid_conditions].compact.join(") AND (") + ")"
-        if IsParanoid.activerecord_2?
-          options[:conditions] = "\#{IsParanoid.disabled? ? #{options.fetch(:conditions, '1=1').inspect} : #{full_conditions.inspect}}"
-        elsif IsParanoid.activerecord_3?
-          options[:conditions] = proc { IsParanoid.disabled? ? options.fetch(:conditions, '1=1') : full_conditions }
-        else
-          raise NotImplementedError, "has_many has not been defined yet for this version of ActiveRecord."
-        end
+        options[:conditions] = proc { IsParanoid.disabled? ? options.fetch(:conditions, '1=1') : full_conditions }
       end
       super
     end
@@ -299,24 +272,14 @@ module IsParanoid
     # the Model.destroy(id), we don't need to specify those methods
     # separately.
     def destroy
-      if IsParanoid.activerecord_2?
-        with_transaction_returning_status(:destroy_with_paranoia)
-      else
-        with_transaction_returning_status do
-          destroy_with_paranoia
-        end
+      with_transaction_returning_status do
+        destroy_with_paranoia
       end
     end
 
     def destroy_with_paranoia
-      if IsParanoid.activerecord_3?
-        run_callbacks(:destroy) do
-          alt_destroy_without_callbacks
-        end
-      else
-        return false if callback(:before_destroy) == false
-        result = alt_destroy_without_callbacks
-        callback(:after_destroy)
+      run_callbacks(:destroy) do
+        alt_destroy_without_callbacks
       end
       @destroyed = true
       self
