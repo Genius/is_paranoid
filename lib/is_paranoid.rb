@@ -24,7 +24,7 @@ module IsParanoid
 
   def is_paranoid opts = {}
     opts[:field] ||= [:deleted_at, Proc.new{Time.now.utc}, nil]
-    class_inheritable_accessor :destroyed_field, :field_destroyed, :field_not_destroyed
+    class_attribute :destroyed_field, :field_destroyed, :field_not_destroyed
     self.destroyed_field, self.field_destroyed, self.field_not_destroyed = opts[:field]
 
     if self.reflect_on_all_associations.size > 0 && ! opts[:suppress_load_order_warning]
@@ -36,7 +36,11 @@ module IsParanoid
     # and field_not_destroyed are). All exceptions require using
     # exclusive_scope (see self.delete_all, self.count_with_destroyed,
     # and self.find_with_destroyed defined in the module ClassMethods)
-    default_scope :conditions => {destroyed_field => field_not_destroyed}
+    default_scope do
+      unless IsParanoid.disabled?
+        where(destroyed_field => field_not_destroyed)
+      end
+    end
 
     extend ClassMethods
     include InstanceMethods
@@ -57,7 +61,7 @@ module IsParanoid
        if options.key?(:through)
         paranoid_conditions = "#{options[:through].to_s.pluralize}.#{destroyed_field} #{is_or_equals_not_destroyed}"
         full_conditions = "(" + [options[:conditions], paranoid_conditions].compact.join(") AND (") + ")"
-        options[:conditions] = "\#{IsParanoid.disabled? ? #{options.fetch(:conditions, '1=1').inspect} : #{full_conditions.inspect}}"
+        options[:conditions] = proc { IsParanoid.disabled? ? options.fetch(:conditions, '1=1') : full_conditions }
       end
       super
     end
@@ -106,12 +110,12 @@ module IsParanoid
           dependent_relationship = association.macro.to_s =~ /^has/
           if should_restore?(association.name, dependent_relationship, options)
             if dependent_relationship
-              restore_related(association.klass, association.primary_key_name, id, options)
+              restore_related(association.klass, association.foreign_key, id, options)
             else
               restore_related(
                 association.klass,
                 association.klass.primary_key,
-                find(id).send(association.primary_key_name),
+                find(id).send(association.foreign_key),
                 options
               )
             end
@@ -228,19 +232,19 @@ module IsParanoid
 	            define_method name do |*args|               # def android_with_destroyed
 	              parent_klass.send("#{parent_method}",     #   Android.all_with_destroyed(
 	                :conditions => {                        #     :conditions => {
-	                  assoc.primary_key_name =>             #       :person_id =>
+	                  assoc.foreign_key =>             #       :person_id =>
 	                    self.send(parent_klass.primary_key) #         self.send(:id)
 	                }                                       #     }
 	              )                                         #   )
 	            end                                         # end
-	
+
 						else
                                                           # Example:
 	            define_method name do |*args|               # def android_with_destroyed
 	              parent_klass.first_with_destroyed(        #   Android.first_with_destroyed(
 	                :conditions => {                        #     :conditions => {
 	                  parent_klass.primary_key =>           #       :id =>
-	                    self.send(assoc.primary_key_name)   #         self.send(:android_id)
+	                    self.send(assoc.foreign_key)   #         self.send(:android_id)
 	                }                                       #     }
 	              )                                         #   )
 	            end                                         # end
@@ -268,13 +272,15 @@ module IsParanoid
     # the Model.destroy(id), we don't need to specify those methods
     # separately.
     def destroy
-      with_transaction_returning_status(:destroy_with_paranoia)
+      with_transaction_returning_status do
+        destroy_with_paranoia
+      end
     end
 
     def destroy_with_paranoia
-      return false if callback(:before_destroy) == false
-      result = alt_destroy_without_callbacks
-      callback(:after_destroy)
+      run_callbacks(:destroy) do
+        alt_destroy_without_callbacks
+      end
       @destroyed = true
       self
     end
