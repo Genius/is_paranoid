@@ -9,6 +9,15 @@ describe IsParanoid do
     Person.delete_all
     Component.delete_all
 
+    Component.create!(
+      :name => <<~NAME
+        This is not meant to be used in tests but to
+        exist as the very first Component to expose
+        bugs where the first component is used instead of
+        the correct component.
+      NAME
+    )
+
     @luke = Person.create(:name => LUKE)
     @r2d2 = Android.create(:name => 'R2D2', :owner_id => @luke.id)
     @c3p0 = Android.create(:name => 'C3P0', :owner_id => @luke.id)
@@ -189,7 +198,7 @@ describe IsParanoid do
       @r2d2.destroy
       lambda{
         @r2d2.restore
-      }.should change(Component, :count).from(0).to(1)
+      }.should change(Component, :count).by(+1)
     end
 
     it "should provide the option to not restore dependent models" do

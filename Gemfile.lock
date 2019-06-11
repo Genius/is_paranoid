@@ -1,26 +1,32 @@
 GIT
   remote: git://github.com/Genius/rails2.git
-  revision: b1152e49c75f2319433f6db4f8d20257c6b2f55a
+  revision: a86ec2ddd58a256548e969f63034af98814a8564
   branch: 2-3-genius-lts
   specs:
-    actionmailer (2.3.18)
-      actionpack (= 2.3.18)
-    actionpack (2.3.18)
-      activesupport (= 2.3.18)
+    actionmailer (2.3.18.24)
+      actionpack (= 2.3.18.24)
+    actionpack (2.3.18.24)
+      activesupport (= 2.3.18.24)
       rack (~> 1.4)
-    activerecord (2.3.18)
-      activesupport (= 2.3.18)
-    activeresource (2.3.18)
-      activesupport (= 2.3.18)
-    activesupport (2.3.18)
-    rails (2.3.18)
-      actionmailer (= 2.3.18)
-      actionpack (= 2.3.18)
-      activerecord (= 2.3.18)
-      activeresource (= 2.3.18)
-      activesupport (= 2.3.18)
-      railslts-version (= 2.3.18.13)
-      rake (>= 0.8.3)
+    activerecord (2.3.18.24)
+      activesupport (= 2.3.18.24)
+    activeresource (2.3.18.24)
+      activesupport (= 2.3.18.24)
+    activesupport (2.3.18.24)
+    rails (2.3.18.24)
+      actionmailer (= 2.3.18.24)
+      actionpack (= 2.3.18.24)
+      activerecord (= 2.3.18.24)
+      activeresource (= 2.3.18.24)
+      activesupport (= 2.3.18.24)
+      rails2_ruby2 (~> 1.0.3)
+      railslts-version (= 2.3.18.24)
+      railties (= 2.3.18.24)
+    railslts-version (2.3.18.24)
+    railties (2.3.18.24)
+      actionpack (= 2.3.18.24)
+      activesupport (= 2.3.18.24)
+      rake (>= 0.8.3, < 11)
 
 GIT
   remote: git://github.com/Genius/rspec.git
@@ -38,32 +44,28 @@ GEM
   remote: https://rubygems.org/
   specs:
     coderay (1.1.0)
-    hoe (3.15.1)
-      rake (>= 0.8, < 12.0)
-    iconv (1.0.4)
+    iconv (1.0.8)
     method_source (0.8.2)
+    pg (1.1.4)
     pry (0.10.4)
       coderay (~> 1.1.0)
       method_source (~> 0.8.1)
       slop (~> 3.4)
-    rack (1.6.4)
-    rails2_ruby2 (0.1.0)
+    rack (1.6.11)
+    rails2_ruby2 (1.0.3)
       iconv
-      syck (~> 1.0.5)
-      test-unit (= 1.2.3)
-    railslts-version (2.3.18.13)
-    rake (11.2.2)
+      syck (~> 1.4)
+    rake (10.5.0)
     slop (3.6.0)
     sqlite3 (1.3.12)
-    syck (1.0.5)
-    test-unit (1.2.3)
-      hoe (>= 1.5.1)
+    syck (1.4.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
   is_paranoid!
+  pg
   pry
   rails!
   rails2_ruby2
@@ -71,4 +73,4 @@ DEPENDENCIES
   sqlite3
 
 BUNDLED WITH
-   1.11.2
+   1.17.3
