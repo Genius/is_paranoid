@@ -232,7 +232,7 @@ module IsParanoid
 	            define_method name do |*args|               # def android_with_destroyed
 	              parent_klass.send("#{parent_method}",     #   Android.all_with_destroyed(
 	                :conditions => {                        #     :conditions => {
-	                  assoc.foreign_key =>             #       :person_id =>
+	                  assoc.foreign_key =>                  #       :person_id =>
 	                    self.send(parent_klass.primary_key) #         self.send(:id)
 	                }                                       #     }
 	              )                                         #   )
@@ -244,7 +244,7 @@ module IsParanoid
 	              parent_klass.first_with_destroyed(        #   Android.first_with_destroyed(
 	                :conditions => {                        #     :conditions => {
 	                  parent_klass.primary_key =>           #       :id =>
-	                    self.send(assoc.foreign_key)   #         self.send(:android_id)
+	                    self.send(assoc.foreign_key)        #         self.send(:android_id)
 	                }                                       #     }
 	              )                                         #   )
 	            end                                         # end
