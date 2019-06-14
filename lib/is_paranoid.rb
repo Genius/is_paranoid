@@ -59,9 +59,10 @@ module IsParanoid
     # NOTE: this only works if is_paranoid is declared before has_many relationships.
     def has_many(association_id, options = {}, &extension)
        if options.key?(:through)
+        original_conditions = options.fetch(:conditions, '1=1')
         paranoid_conditions = "#{options[:through].to_s.pluralize}.#{destroyed_field} #{is_or_equals_not_destroyed}"
         full_conditions = "(" + [options[:conditions], paranoid_conditions].compact.join(") AND (") + ")"
-        options[:conditions] = proc { IsParanoid.disabled? ? options.fetch(:conditions, '1=1') : full_conditions }
+        options[:conditions] = proc { IsParanoid.disabled? ? original_conditions : full_conditions }
       end
       super
     end

@@ -17,6 +17,7 @@ ActiveRecord::Schema.define(:version => 20090317164830) do
     t.integer  "dent_id"
     t.string   "description"
     t.boolean  "not_deleted"
+    t.boolean  "hidden", default: false
   end
 
   create_table "scratches", :force => true do |t|
