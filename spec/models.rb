@@ -10,7 +10,7 @@ class Android < ActiveRecord::Base #:nodoc:
   has_one :sticker
   has_many :memories, :foreign_key => 'parent_id'
   has_many :dents
-  has_many :dings, :through => :dents
+  has_many :dings, :through => :dents, conditions: "dings.hidden = 'f'"
   has_many :scratches, :through => :dents
   has_and_belongs_to_many :places
 
