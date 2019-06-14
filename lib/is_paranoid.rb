@@ -58,11 +58,25 @@ module IsParanoid
     # ensure that we respect the is_paranoid conditions when being loaded as a has_many :through
     # NOTE: this only works if is_paranoid is declared before has_many relationships.
     def has_many(association_id, options = {}, &extension)
-       if options.key?(:through)
-        original_conditions = options.fetch(:conditions, '1=1')
+      original_conditions = options.fetch(:conditions, '1=1')
+      evaluate_conditions = proc do |model, conditions|
+        conditions.is_a?(String) ? model.instance_eval(%|"#{conditions}"|) : conditions
+      end
+
+      if options.key?(:through)
         paranoid_conditions = "#{options[:through].to_s.pluralize}.#{destroyed_field} #{is_or_equals_not_destroyed}"
         full_conditions = "(" + [options[:conditions], paranoid_conditions].compact.join(") AND (") + ")"
-        options[:conditions] = proc { IsParanoid.disabled? ? original_conditions : full_conditions }
+        options[:conditions] = proc do
+          if IsParanoid.disabled?
+            evaluate_conditions.call(self, original_conditions)
+          else
+            evaluate_conditions.call(self, full_conditions)
+          end
+        end
+      elsif original_conditions
+        options[:conditions] = proc do
+            evaluate_conditions.call(self, original_conditions)
+        end
       end
       super
     end

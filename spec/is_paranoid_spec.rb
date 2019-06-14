@@ -105,21 +105,37 @@ describe IsParanoid do
         end
       end
 
+      it 'works with has_many with conditions' do
+        dent = @r2d2.dents.create!
+
+        @r2d2.dents.should == [dent]
+        IsParanoid.disable { @r2d2.dents.should == [dent] }
+
+        dent.update_attributes!(hidden: true)
+        @r2d2.dents.reload.should == []
+        IsParanoid.disable { @r2d2.dents.reload.should == [] }
+
+        dent.update_attributes!(hidden: false)
+        dent.destroy
+        @r2d2.dents.should == []
+        IsParanoid.disable { @r2d2.dents.reload.should == [dent] }
+      end
+
       it 'works with has_many through with conditions' do
         dent = @r2d2.dents.create!
         ding_a = dent.dings.create!
         ding_b = dent.dings.create!
 
         @r2d2.dings.order('id asc').should == [ding_a, ding_b]
-        IsParanoid.disable {  @r2d2.dings.order('id asc').should == [ding_a, ding_b] }
+        IsParanoid.disable { @r2d2.dings.order('id asc').should == [ding_a, ding_b] }
 
         ding_b.update_attributes!(hidden: true)
-        @r2d2.dings.order('id asc').should == [ding_a]
+        @r2d2.dings.reload.order('id asc').should == [ding_a]
         IsParanoid.disable { @r2d2.dings.reload.should == [ding_a] }
 
         ding_b.update_attributes!(hidden: false)
         ding_b.destroy
-        @r2d2.dings.order('id asc').should == [ding_a]
+        @r2d2.dings.reload.order('id asc').should == [ding_a]
         IsParanoid.disable { @r2d2.dings.reload.should == [ding_a, ding_b] }
       end
 

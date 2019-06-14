@@ -11,6 +11,7 @@ ActiveRecord::Schema.define(:version => 20090317164830) do
     t.integer  "android_id"
     t.string   "description"
     t.datetime "deleted_at"
+    t.boolean  "hidden", default: false
   end
 
   create_table "dings", :force => true do |t|

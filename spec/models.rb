@@ -9,8 +9,8 @@ class Android < ActiveRecord::Base #:nodoc:
   has_many :components, :dependent => :destroy
   has_one :sticker
   has_many :memories, :foreign_key => 'parent_id'
-  has_many :dents
-  has_many :dings, :through => :dents, conditions: "dings.hidden = 'f'"
+  has_many :dents, conditions: 'dents.hidden = #{include_hidden_condition}'
+  has_many :dings, :through => :dents, conditions: 'dings.hidden = #{include_hidden_condition}'
   has_many :scratches, :through => :dents
   has_and_belongs_to_many :places
 
@@ -19,6 +19,10 @@ class Android < ActiveRecord::Base #:nodoc:
   before_update :raise_hell
   def raise_hell
     raise "hell"
+  end
+
+  def include_hidden_condition
+    "'f'"
   end
 end
 
