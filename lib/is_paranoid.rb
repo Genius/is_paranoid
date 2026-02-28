@@ -11,15 +11,15 @@ module IsParanoid
   #
 
   def self.disabled?
-    !!@disabled
+    !!Thread.current[:is_paranoid_disabled]
   end
 
   def self.disable
-    was_disabled = @disabled
-    @disabled = true
+    was_disabled = Thread.current[:is_paranoid_disabled]
+    Thread.current[:is_paranoid_disabled] = true
     yield
   ensure
-    @disabled = was_disabled
+    Thread.current[:is_paranoid_disabled] = was_disabled
   end
 
   def is_paranoid opts = {}
@@ -57,16 +57,23 @@ module IsParanoid
 
     # ensure that we respect the is_paranoid conditions when being loaded as a has_many :through
     # NOTE: this only works if is_paranoid is declared before has_many relationships.
-    def has_many(association_id, options = {}, &extension)
-       if options.key?(:through)
-        original_conditions = options.fetch(:conditions, '1=1')
-        paranoid_conditions = "#{options[:through].to_s.pluralize}.#{destroyed_field} #{is_or_equals_not_destroyed}"
-        full_conditions = "(" + [options[:conditions], paranoid_conditions].compact.join(") AND (") + ")"
-        options[:conditions] = proc { IsParanoid.disabled? ? original_conditions : full_conditions }
+    def has_many(association_id, scope = nil, options = {}, &extension)
+      if scope.is_a?(Hash)
+        options = scope
+        scope = nil
       end
-      super
-    end
 
+      if options.key?(:through)
+        paranoid_conditions = "#{options[:through].to_s.pluralize}.#{destroyed_field} #{is_or_equals_not_destroyed}"
+
+        original_scope = scope
+        scope = -> do
+          base = original_scope ? instance_exec(&original_scope) : all
+          IsParanoid.disabled? ? base : base.where(paranoid_conditions)
+        end
+      end
+      super(association_id, scope, options, &extension)
+    end
 
     # Actually delete the model, bypassing the safety net. Because
     # this method is called internally by Model.delete(id) and on the
