@@ -1,118 +1,199 @@
-GIT
-  remote: git://github.com/Genius/rspec.git
-  revision: c2f62a4d1087dc52014b2c111c3479c5029a1646
-  branch: ruby2
-  specs:
-    rspec (1.3.2)
-
 PATH
   remote: .
   specs:
     is_paranoid (0.9.6)
 
 GEM
-  remote: https://rubygems.org/
+  remote: https://gems.railslts.com/
   specs:
-    actionmailer (3.2.22.5)
-      actionpack (= 3.2.22.5)
+    actionmailer (3.2.22.53)
+      actionpack (= 3.2.22.53)
       mail (~> 2.5.4)
-    actionpack (3.2.22.5)
-      activemodel (= 3.2.22.5)
-      activesupport (= 3.2.22.5)
-      builder (~> 3.0.0)
+    actionpack (3.2.22.53)
+      activemodel (= 3.2.22.53)
+      activesupport (= 3.2.22.53)
+      builder (~> 3.0)
       erubis (~> 2.7.0)
       journey (~> 1.0.4)
       rack (~> 1.4.5)
       rack-cache (~> 1.2)
       rack-test (~> 0.6.1)
-      sprockets (~> 2.2.1)
-    activemodel (3.2.22.5)
-      activesupport (= 3.2.22.5)
-      builder (~> 3.0.0)
-    activerecord (3.2.22.5)
-      activemodel (= 3.2.22.5)
-      activesupport (= 3.2.22.5)
+      sprockets (= 2.2.3)
+    activemodel (3.2.22.53)
+      activesupport (= 3.2.22.53)
+      builder (~> 3.0)
+    activerecord (3.2.22.53)
+      activemodel (= 3.2.22.53)
+      activesupport (= 3.2.22.53)
       arel (~> 3.0.2)
-      tzinfo (~> 0.3.29)
-    activeresource (3.2.22.5)
-      activemodel (= 3.2.22.5)
-      activesupport (= 3.2.22.5)
-    activesupport (3.2.22.5)
-      i18n (~> 0.6, >= 0.6.4)
+      tzinfo (~> 0.3.61)
+    activeresource (3.2.22.53)
+      activemodel (= 3.2.22.53)
+      activesupport (= 3.2.22.53)
+    activesupport (3.2.22.53)
+      i18n (>= 0.6.4, < 2)
       multi_json (~> 1.0)
+    rack (1.4.7.29)
+    rails (3.2.22.53)
+      actionmailer (= 3.2.22.53)
+      actionpack (= 3.2.22.53)
+      activemodel (= 3.2.22.53)
+      activerecord (= 3.2.22.53)
+      activeresource (= 3.2.22.53)
+      activesupport (= 3.2.22.53)
+      bundler (>= 1.0)
+      railties (= 3.2.22.53)
+    railties (3.2.22.53)
+      actionpack (= 3.2.22.53)
+      activesupport (= 3.2.22.53)
+      rack-ssl (~> 1.3)
+      rake (>= 0.8.7)
+      thor (>= 0.14.6, < 2.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
     arel (3.0.3)
-    builder (3.0.4)
-    byebug (11.0.1)
-    coderay (1.1.2)
-    concurrent-ruby (1.1.5)
+    base64 (0.3.0)
+    benchmark (0.5.0)
+    bigdecimal (4.1.0)
+    builder (3.3.0)
+    byebug (13.0.0)
+      reline (>= 0.6.0)
+    coderay (1.1.3)
+    concurrent-ruby (1.3.6)
+    diff-lcs (1.6.2)
     erubis (2.7.0)
     hike (1.2.3)
-    i18n (0.9.5)
+    i18n (1.14.8)
       concurrent-ruby (~> 1.0)
+    io-console (0.8.2)
     journey (1.0.4)
-    json (1.8.6)
+    logger (1.7.0)
     mail (2.5.5)
       mime-types (~> 1.16)
       treetop (~> 1.4.8)
-    method_source (0.9.2)
+    method_source (1.1.0)
     mime-types (1.25.1)
-    multi_json (1.13.1)
-    pg (1.1.4)
+    multi_json (1.19.1)
+    mutex_m (0.3.0)
+    next_rails (1.5.0)
+      rainbow (>= 3)
+    pg (1.5.9)
     polyglot (0.3.5)
-    pry (0.12.2)
-      coderay (~> 1.1.0)
-      method_source (~> 0.9.0)
-    pry-byebug (3.7.0)
-      byebug (~> 11.0)
-      pry (~> 0.10)
-    rack (1.4.7)
-    rack-cache (1.9.0)
+    pry (0.16.0)
+      coderay (~> 1.1)
+      method_source (~> 1.0)
+      reline (>= 0.6.0)
+    pry-byebug (3.12.0)
+      byebug (~> 13.0)
+      pry (>= 0.13, < 0.17)
+    rack-cache (1.17.0)
       rack (>= 0.4)
-    rack-ssl (1.3.4)
+    rack-ssl (1.4.1)
       rack
     rack-test (0.6.3)
       rack (>= 1.0)
-    rails (3.2.22.5)
-      actionmailer (= 3.2.22.5)
-      actionpack (= 3.2.22.5)
-      activerecord (= 3.2.22.5)
-      activeresource (= 3.2.22.5)
-      activesupport (= 3.2.22.5)
-      bundler (~> 1.0)
-      railties (= 3.2.22.5)
-    railties (3.2.22.5)
-      actionpack (= 3.2.22.5)
-      activesupport (= 3.2.22.5)
-      rack-ssl (~> 1.3.2)
-      rake (>= 0.8.7)
-      rdoc (~> 3.4)
-      thor (>= 0.14.6, < 2.0)
-    rake (12.3.2)
-    rdoc (3.12.2)
-      json (~> 1.4)
+    rainbow (3.1.1)
+    rake (13.3.1)
+    reline (0.6.3)
+      io-console (~> 0.5)
+    rspec (3.13.2)
+      rspec-core (~> 3.13.0)
+      rspec-expectations (~> 3.13.0)
+      rspec-mocks (~> 3.13.0)
+    rspec-core (3.13.6)
+      rspec-support (~> 3.13.0)
+    rspec-expectations (3.13.5)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-mocks (3.13.8)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-support (3.13.7)
+    ruby3-backward-compatibility (1.5.1)
     sprockets (2.2.3)
       hike (~> 1.2)
       multi_json (~> 1.0)
       rack (~> 1.0)
       tilt (~> 1.1, != 1.3.0)
-    sqlite3 (1.3.13)
-    thor (0.20.3)
+    thor (1.5.0)
     tilt (1.4.1)
     treetop (1.4.15)
       polyglot
       polyglot (>= 0.3.1)
-    tzinfo (0.3.55)
+    tzinfo (0.3.62)
 
 PLATFORMS
-  ruby
+  arm64-darwin-25
 
 DEPENDENCIES
+  base64
+  benchmark
+  bigdecimal
   is_paranoid!
-  pg
+  logger
+  mutex_m
+  next_rails
+  pg (~> 1.5.6)
   pry-byebug
-  rails (~> 3.2)
-  rspec!
-  sqlite3 (~> 1.3.5)
+  rails (~> 3.2)!
+  rspec
+  ruby3-backward-compatibility
+
+CHECKSUMS
+  actionmailer (3.2.22.53)
+  actionpack (3.2.22.53)
+  activemodel (3.2.22.53)
+  activerecord (3.2.22.53)
+  activeresource (3.2.22.53)
+  activesupport (3.2.22.53)
+  arel (3.0.3) sha256=c0006e2169deee3b8cc2d258296388822eeb2db59832450b9b7316e1387d0da4
+  base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
+  benchmark (0.5.0) sha256=465df122341aedcb81a2a24b4d3bd19b6c67c1530713fd533f3ff034e419236c
+  bigdecimal (4.1.0) sha256=6dc07767aa3dc456ccd48e7ae70a07b474e9afd7c5bc576f80bd6da5c8dd6cae
+  builder (3.3.0) sha256=497918d2f9dca528fdca4b88d84e4ef4387256d984b8154e9d5d3fe5a9c8835f
+  byebug (13.0.0) sha256=d2263efe751941ca520fa29744b71972d39cbc41839496706f5d9b22e92ae05d
+  coderay (1.1.3) sha256=dc530018a4684512f8f38143cd2a096c9f02a1fc2459edcfe534787a7fc77d4b
+  concurrent-ruby (1.3.6) sha256=6b56837e1e7e5292f9864f34b69c5a2cbc75c0cf5338f1ce9903d10fa762d5ab
+  diff-lcs (1.6.2) sha256=9ae0d2cba7d4df3075fe8cd8602a8604993efc0dfa934cff568969efb1909962
+  erubis (2.7.0) sha256=63653f5174a7997f6f1d6f465fbe1494dcc4bdab1fb8e635f6216989fb1148ba
+  hike (1.2.3) sha256=154e2f2593845e5bcd8ed2ba3092600c55c6ad8c630722857de3fdaf334ccc44
+  i18n (1.14.8) sha256=285778639134865c5e0f6269e0b818256017e8cde89993fdfcbfb64d088824a5
+  io-console (0.8.2) sha256=d6e3ae7a7cc7574f4b8893b4fca2162e57a825b223a177b7afa236c5ef9814cc
+  is_paranoid (0.9.6)
+  journey (1.0.4) sha256=7454b8612530784000fbb17ea2df749a71b70702a0ac8ebef4a1e7f05aecc10f
+  logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
+  mail (2.5.5) sha256=1fc84a43dbd33369b4ea99f46ab4e2435028e44bb3f7ff9a70a69c62fc588f27
+  method_source (1.1.0) sha256=181301c9c45b731b4769bc81e8860e72f9161ad7d66dd99103c9ab84f560f5c5
+  mime-types (1.25.1) sha256=88ef3c596481678710ffd4018fa40f1999b02d97babea39682ba7d5badd21f56
+  multi_json (1.19.1) sha256=7aefeff8f2c854bf739931a238e4aea64592845e0c0395c8a7d2eea7fdd631b7
+  mutex_m (0.3.0) sha256=cfcb04ac16b69c4813777022fdceda24e9f798e48092a2b817eb4c0a782b0751
+  next_rails (1.5.0) sha256=97b8418acb9f9e1d66f72bb571096c6ba6125b7cb4ba9f7d51b10ece62c7d77c
+  pg (1.5.9) sha256=761efbdf73b66516f0c26fcbe6515dc7500c3f0aa1a1b853feae245433c64fdc
+  polyglot (0.3.5) sha256=59d66ef5e3c166431c39cb8b7c1d02af419051352f27912f6a43981b3def16af
+  pry (0.16.0) sha256=d76c69065698ed1f85e717bd33d7942c38a50868f6b0673c636192b3d1b6054e
+  pry-byebug (3.12.0) sha256=594e094ae8a8390a7ad4c7b36ae36e13304ed02664c67417d108dc5f7213d1b7
+  rack (1.4.7.29)
+  rack-cache (1.17.0) sha256=49592f3ef2173b0f5524df98bb801fb411e839869e7ce84ac428dc492bf0eb90
+  rack-ssl (1.4.1) sha256=f7f9d359c13d563fd0fe3e4eced0b357d8ba0502c837839f7520502f27ee4130
+  rack-test (0.6.3) sha256=ff60b122e2940e32e94a2e4a61bceb8d9c99a97c1817ecc47e535522b02cdd40
+  rails (3.2.22.53)
+  railties (3.2.22.53)
+  rainbow (3.1.1) sha256=039491aa3a89f42efa1d6dec2fc4e62ede96eb6acd95e52f1ad581182b79bc6a
+  rake (13.3.1) sha256=8c9e89d09f66a26a01264e7e3480ec0607f0c497a861ef16063604b1b08eb19c
+  reline (0.6.3) sha256=1198b04973565b36ec0f11542ab3f5cfeeec34823f4e54cebde90968092b1835
+  rspec (3.13.2) sha256=206284a08ad798e61f86d7ca3e376718d52c0bc944626b2349266f239f820587
+  rspec-core (3.13.6) sha256=a8823c6411667b60a8bca135364351dda34cd55e44ff94c4be4633b37d828b2d
+  rspec-expectations (3.13.5) sha256=33a4d3a1d95060aea4c94e9f237030a8f9eae5615e9bd85718fe3a09e4b58836
+  rspec-mocks (3.13.8) sha256=086ad3d3d17533f4237643de0b5c42f04b66348c28bf6b9c2d3f4a3b01af1d47
+  rspec-support (3.13.7) sha256=0640e5570872aafefd79867901deeeeb40b0c9875a36b983d85f54fb7381c47c
+  ruby3-backward-compatibility (1.5.1) sha256=6d9fce1cc0e06f3843b14f54d34592d3ab0d367208c2149bfc6a409e9fedb9a4
+  sprockets (2.2.3) sha256=f3bbe40bbbe58a7d7b9a916b491e551c13bdf30692caf61ffdeee586bd3e1be0
+  thor (1.5.0) sha256=e3a9e55fe857e44859ce104a84675ab6e8cd59c650a49106a05f55f136425e73
+  tilt (1.4.1) sha256=39820562c4f5db45fe18de87ccc30a0e77a998bf5334b1d8c10a2f7dbc1f5903
+  treetop (1.4.15) sha256=ffa68f201c0f62c26b0a1d13233d73194400596964696843f87ebb5d812f12ff
+  tzinfo (0.3.62) sha256=ea69564cb85d8318f89efced5ed7d117e64fa54dba1abce24d38c6c5dd3472a1
 
 BUNDLED WITH
-   1.17.3
+  4.0.9

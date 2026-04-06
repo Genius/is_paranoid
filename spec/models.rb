@@ -10,7 +10,13 @@ class Android < ActiveRecord::Base #:nodoc:
   has_one :sticker
   has_many :memories, :foreign_key => 'parent_id'
   has_many :dents
-  has_many :dings, :through => :dents, conditions: "dings.hidden = 'f'"
+
+  if IsParanoid::RAILS_4
+    has_many :dings, -> { where("dings.hidden = 'f'") }, :through => :dents
+  else
+    has_many :dings, :through => :dents, conditions: "dings.hidden = 'f'"
+  end
+
   has_many :scratches, :through => :dents
   has_and_belongs_to_many :places
 
@@ -75,7 +81,7 @@ class Sticker < ActiveRecord::Base #:nodoc:
 end
 
 class AndroidWithScopedUniqueness < ActiveRecord::Base #:nodoc:
-  set_table_name :androids
+  self.table_name = 'androids'
   validates_uniqueness_of :name, :scope => :deleted_at
   is_paranoid
 end
@@ -100,12 +106,12 @@ class Pirate < ActiveRecord::Base #:nodoc:
 end
 
 class DeadPirate < ActiveRecord::Base #:nodoc:
-  set_table_name :pirates
+  self.table_name = 'pirates'
   is_paranoid :field => [:alive, true, false]
 end
 
 class RandomPirate < ActiveRecord::Base #:nodoc:
-  set_table_name :pirates
+  self.table_name = 'pirates'
   after_destroy :after_destroy
 
   def after_destroy
@@ -114,7 +120,7 @@ class RandomPirate < ActiveRecord::Base #:nodoc:
 end
 
 class UndestroyablePirate < ActiveRecord::Base #:nodoc:
-  set_table_name :pirates
+  self.table_name = 'pirates'
   is_paranoid :field => [:alive, false, true]
 
   before_destroy :before_destroy
@@ -125,11 +131,11 @@ class UndestroyablePirate < ActiveRecord::Base #:nodoc:
 end
 
 class Uuid < ActiveRecord::Base #:nodoc:
-  set_primary_key "uuid"
+  self.primary_key = 'uuid'
 
-  before_create :before_create
+  before_create :set_uuid
 
-  def before_create
+  def set_uuid
     self.uuid = "295b3430-85b8-012c-cfe4-002332cf7d5e"
   end
 

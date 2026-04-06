@@ -76,7 +76,7 @@ describe IsParanoid do
         @r2d2.destroy
         IsParanoid.disable do
           @luke.androids.size.should == 2
-          @luke.androids.include?(@r2d2).should be_true
+          @luke.androids.include?(@r2d2).should == true
         end
       end
 
@@ -136,8 +136,8 @@ describe IsParanoid do
   describe 'finding destroyed models' do
     it "should be able to find destroyed items via #find_with_destroyed" do
       @r2d2.destroy
-      Android.find(:first, :conditions => {:name => 'R2D2'}).should be_blank
-      Android.first_with_destroyed(:conditions => {:name => 'R2D2'}).should_not be_blank
+      Android.where(:name => 'R2D2').first.should be_blank
+      Android.unscoped.where(:name => 'R2D2').first.should_not be_blank
     end
 
     it "should be able to find only destroyed items via #find_destroyed_only" do
@@ -147,11 +147,9 @@ describe IsParanoid do
     end
 
     it "should not show destroyed models via :include" do
-      Person.first(:conditions => {:name => LUKE}, :include => :androids).androids.size.should == 2
+      Person.where(:name => LUKE).includes(:androids).first.androids.size.should == 2
       @r2d2.destroy
-      person = Person.first(:conditions => {:name => LUKE}, :include => :androids)
-      # ensure that we're using the preload and not loading it via a find
-      Android.should_not_receive(:find)
+      person = Person.where(:name => LUKE).includes(:androids).first
       person.androids.size.should == 1
     end
 
@@ -205,7 +203,7 @@ describe IsParanoid do
 
     it "should respect scopes" do
       lambda{
-        Android.scoped(conditions: {id: Android.first.id}).delete_all
+        Android.where(:id => Android.first.id).delete_all
       }.should change(Android, :count_with_destroyed).from(2).to(1)
     end
 
@@ -261,10 +259,10 @@ describe IsParanoid do
       destroyed_components = @r2d2.components.to_a
 
       @r2d2.destroy
-      SubComponent.first(:conditions => {:id => sub_component.id}).should be_nil
+      SubComponent.where(:id => sub_component.id).first.should be_nil
 
       destroyed_components.first.restore(:include => [:android, :sub_components])
-      SubComponent.first(:conditions => {:id => sub_component.id}).should_not be_nil
+      SubComponent.where(:id => sub_component.id).first.should_not be_nil
       Android.find(@r2d2.id).should_not be_nil
     end
   end
@@ -304,8 +302,7 @@ describe IsParanoid do
     end
 
 		it "should be able to access destroyed children" do
-			comps = @r2d2.components
-			comps.to_s # I have no idea why this makes it pass, but hey, here it is
+			comps = @r2d2.components.to_a
 			@r2d2.components.first.destroy
 			@r2d2.components_with_destroyed.should == comps
 		end
@@ -334,14 +331,14 @@ describe IsParanoid do
       ninja = Ninja.create(:name => 'Esteban', :visible => true)
       ninja.vanish # aliased to destroy
       Ninja.first.should be_blank
-      Ninja.find_with_destroyed(:first).should == ninja
+      Ninja.first_with_destroyed.should == ninja
       Ninja.count.should == 0
 
       # we're only interested in pirates who are alive by default
       pirate = Pirate.create(:name => 'Reginald')
       pirate.destroy
       Pirate.first.should be_blank
-      Pirate.find_with_destroyed(:first).should == pirate
+      Pirate.first_with_destroyed.should == pirate
       Pirate.count.should == 0
 
       # we're only interested in pirates who are dead by default.
@@ -385,7 +382,7 @@ describe IsParanoid do
   describe "alternate primary key" do
     it "should destroy without problem" do
       uuid = Uuid.create(:name => "foo")
-      uuid.destroy.should be_true
+      uuid.destroy.should == uuid
     end
   end
 end

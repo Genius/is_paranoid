@@ -1,3 +1,9 @@
 test:
-  :adapter: sqlite3
-  :database: is_paranoid.db
+  adapter: postgresql
+  username: postgres
+  password: password
+  database: is_paranoid_test
+  host: 127.0.0.1
+  port: 5432
+  pool: 5
+  prepared_statements: false
