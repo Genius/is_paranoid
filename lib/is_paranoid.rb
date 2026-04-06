@@ -1,14 +1,7 @@
 require 'active_record'
 
 module IsParanoid
-  # Call this in your model to enable all the safety-net goodness
-  #
-  # Example:
-  #
-  # class Android < ActiveRecord::Base
-  #   is_paranoid
-  # end
-  #
+  RAILS_4 = ActiveRecord::VERSION::MAJOR >= 4
 
   def self.disabled?
     !!Thread.current[:is_paranoid_disabled]
@@ -22,12 +15,12 @@ module IsParanoid
     Thread.current[:is_paranoid_disabled] = was_disabled
   end
 
-  def is_paranoid opts = {}
-    opts[:field] ||= [:deleted_at, Proc.new{Time.now.utc}, nil]
+  def is_paranoid(opts = {})
+    opts[:field] ||= [:deleted_at, Proc.new { Time.now.utc }, nil]
     class_attribute :destroyed_field, :field_destroyed, :field_not_destroyed
     self.destroyed_field, self.field_destroyed, self.field_not_destroyed = opts[:field]
 
-    if self.reflect_on_all_associations.size > 0 && ! opts[:suppress_load_order_warning]
+    if self.reflect_on_all_associations.size > 0 && !opts[:suppress_load_order_warning]
       warn "is_paranoid warning in class #{self}:  You should declare is_paranoid before your associations"
     end
 
@@ -37,7 +30,9 @@ module IsParanoid
     # exclusive_scope (see self.delete_all, self.count_with_destroyed,
     # and self.find_with_destroyed defined in the module ClassMethods)
     default_scope do
-      unless IsParanoid.disabled?
+      if IsParanoid.disabled?
+        where(nil)
+      else
         where(destroyed_field => field_not_destroyed)
       end
     end
@@ -57,22 +52,40 @@ module IsParanoid
 
     # ensure that we respect the is_paranoid conditions when being loaded as a has_many :through
     # NOTE: this only works if is_paranoid is declared before has_many relationships.
-    def has_many(association_id, scope = nil, options = {}, &extension)
-      if scope.is_a?(Hash)
-        options = scope
-        scope = nil
-      end
-
-      if options.key?(:through)
-        paranoid_conditions = "#{options[:through].to_s.pluralize}.#{destroyed_field} #{is_or_equals_not_destroyed}"
-
-        original_scope = scope
-        scope = -> do
-          base = original_scope ? instance_exec(&original_scope) : all
-          IsParanoid.disabled? ? base : base.where(paranoid_conditions)
+    if IsParanoid::RAILS_4
+      def has_many(association_id, scope = nil, options = {}, &extension)
+        if scope.is_a?(Hash)
+          options = scope
+          scope = nil
         end
+        if options.key?(:through)
+          through_paranoid = begin
+                               klass = options[:through].to_s.classify.constantize
+                               klass.respond_to?(:destroyed_field) && klass.destroyed_field
+                             rescue NameError
+                               false
+                             end
+          if through_paranoid
+            paranoid_conditions = "#{options[:through].to_s.pluralize}.#{destroyed_field} #{is_or_equals_not_destroyed}"
+            original_scope = scope
+            scope = -> do
+              base = original_scope ? instance_exec(&original_scope) : all
+              IsParanoid.disabled? ? base : base.where(paranoid_conditions)
+            end
+          end
+        end
+        super(association_id, scope, options, &extension)
       end
-      super(association_id, scope, options, &extension)
+    else
+      def has_many(association_id, options = {}, &extension)
+        if options.key?(:through)
+          original_conditions = options.fetch(:conditions, '1=1')
+          paranoid_conditions = "#{options[:through].to_s.pluralize}.#{destroyed_field} #{is_or_equals_not_destroyed}"
+          full_conditions = "(" + [options[:conditions], paranoid_conditions].compact.join(") AND (") + ")"
+          options[:conditions] = proc { IsParanoid.disabled? ? original_conditions : full_conditions }
+        end
+        super
+      end
     end
 
     # Actually delete the model, bypassing the safety net. Because
@@ -105,12 +118,19 @@ module IsParanoid
     #
     #  Android.restore(:include => [:home, :planet], :include_destroyed_dependents => true)
     def restore(id, options = {})
-      options.reverse_merge!({:include_destroyed_dependents => true}) unless options[:include]
-      with_exclusive_scope do
-        update_all(
-          "#{destroyed_field} = #{connection.quote(field_not_destroyed)}",
-          primary_key.to_sym => id
+      options.reverse_merge!({ :include_destroyed_dependents => true }) unless options[:include]
+
+      if IsParanoid::RAILS_4
+        unscoped.where(primary_key.to_sym => id).update_all(
+          destroyed_field => field_not_destroyed
         )
+      else
+        with_exclusive_scope do
+          update_all(
+            "#{destroyed_field} = #{connection.quote(field_not_destroyed)}",
+            primary_key.to_sym => id
+          )
+        end
       end
 
       self.reflect_on_all_associations.each do |association|
@@ -134,64 +154,59 @@ module IsParanoid
 
     # find_with_destroyed and other blah_with_destroyed and
     # blah_destroyed_only methods are defined here
-    def method_missing name, *args, &block
+    def method_missing(name, *args, &block)
       if name.to_s =~ /^(.*)(_destroyed_only|_with_destroyed)$/ and self.respond_to?($1)
-        self.extend(Module.new{
-          if $2 == '_with_destroyed'
-            # Example:
-            # def count_with_destroyed(*args)
-            #   self.with_exclusive_scope{ self.send(:count, *args) }
-            # end
+        method_name = $1
+        suffix = $2
+        self.extend(Module.new {
+          if suffix == '_with_destroyed'
             define_method name do |*args|
-              self.with_exclusive_scope{ self.send($1, *args) }
+              if IsParanoid::RAILS_4
+                unscoped { send(method_name, *args) }
+              else
+                with_exclusive_scope { send(method_name, *args) }
+              end
             end
           else
-
-            # Example:
-            # def count_destroyed_only(*args)
-            #   self.with_exclusive_scope do
-            #     with_scope({:find => { :conditions => ["#{destroyed_field} IS NOT ?", nil] }}) do
-            #       self.send(:count, *args)
-            #     end
-            #   end
-            # end
-            define_method name do |*args|
-              self.with_exclusive_scope do
-                with_scope({:find => { :conditions => ["#{self.table_name}.#{destroyed_field} IS NOT ?", field_not_destroyed] }}) do
-                  self.send($1, *args, &block)
+            define_method name do |*args, &blk|
+              if IsParanoid::RAILS_4
+                unscoped.where.not(destroyed_field => field_not_destroyed).send(method_name, *args, &blk)
+              else
+                with_exclusive_scope do
+                  with_scope({ :find => { :conditions => ["#{table_name}.#{destroyed_field} IS NOT ?", field_not_destroyed] } }) do
+                    send(method_name, *args, &blk)
+                  end
                 end
               end
             end
-
           end
         })
-      self.send(name, *args, &block)
+        self.send(name, *args, &block)
       else
         super(name, *args, &block)
       end
     end
 
-    # with_exclusive_scope is used internally by ActiveRecord when preloading
-    # associations.  Unfortunately this is problematic for is_paranoid since we
-    # want preloaded is_paranoid items to still be scoped to their deleted conditions.
-    # so we override that here.
-    def with_exclusive_scope(method_scoping = {}, &block)
-      # this is rather hacky, suggestions for improvements appreciated... the idea
-      # is that when the caller includes the method preload_associations, we want
-      # to apply our is_paranoid conditions
-      if !IsParanoid.disabled? && caller.any?{|c| c =~ /\d+:in `preload_associations'$/}
-        method_scoping.deep_merge!(:find => {:conditions => {destroyed_field => field_not_destroyed} })
+    unless IsParanoid::RAILS_4
+      # with_exclusive_scope is used internally by ActiveRecord when preloading
+      # associations.  Unfortunately this is problematic for is_paranoid since we
+      # want preloaded is_paranoid items to still be scoped to their deleted conditions.
+      # so we override that here.
+      def with_exclusive_scope(method_scoping = {}, &block)
+        if !IsParanoid.disabled? && caller.any? { |c| c =~ /\d+:in `preload_associations'$/ }
+          method_scoping.deep_merge!(:find => { :conditions => { destroyed_field => field_not_destroyed } })
+        end
+        super method_scoping, &block
       end
-      super method_scoping, &block
-    end
 
-    def current_scoped_methods
-      methods = super
-      if IsParanoid.disabled? && methods.try(:[], :find).try(:[], :conditions).is_a?(Hash)
-        methods = Marshal.load(Marshal.dump(methods))
-        methods[:find][:conditions].delete(:deleted_at)
+      def current_scoped_methods
+        methods = super
+        if IsParanoid.disabled? && methods.try(:[], :find).try(:[], :conditions).is_a?(Hash)
+          methods = Marshal.load(Marshal.dump(methods))
+          methods[:find][:conditions].delete(:deleted_at)
+        end
+        methods
       end
-      methods
     end
 
     protected
@@ -201,11 +216,19 @@ module IsParanoid
         (options[:include_destroyed_dependents] and dependent_relationship)
     end
 
-    def restore_related klass, key_name, id, options #:nodoc:
-      klass.find_destroyed_only(:all,
-        :conditions => ["#{key_name} = ?", id]
-      ).each do |model|
-        model.restore(options)
+    def restore_related(klass, key_name, id, options)
+      if IsParanoid::RAILS_4
+        klass.unscoped
+             .where.not(klass.destroyed_field => klass.field_not_destroyed)
+             .where(key_name => id).each do |model|
+          model.restore(options)
+        end
+      else
+        klass.find_destroyed_only(:all,
+                                  :conditions => ["#{key_name} = ?", id]
+        ).each do |model|
+          model.restore(options)
+        end
       end
     end
   end
@@ -214,49 +237,40 @@ module IsParanoid
     def self.included(base)
       base.class_eval do
         unless method_defined? :method_missing
-          def method_missing(meth, *args, &block); super; end
+          def method_missing(meth, *args, &block)
+            super
+          end
         end
         alias_method :old_method_missing, :method_missing
         alias_method :method_missing, :is_paranoid_method_missing
       end
     end
 
-    def is_paranoid_method_missing name, *args, &block
+    def is_paranoid_method_missing(name, *args, &block)
       # if we're trying for a _____with_destroyed method
       # and we can respond to the _____ method
       # and we have an association by the name of _____
-      if name.to_s =~ /^(.*)(_with_destroyed)$/ and
-          self.respond_to?($1) and
-          (assoc = self.class.reflect_on_all_associations.detect{|a| a.name.to_s == $1})
+      if name.to_s =~ /^(.*)(_with_destroyed)$/ &&
+         self.respond_to?($1) &&
+         (assoc = self.class.reflect_on_all_associations.detect { |a| a.name.to_s == $1 })
 
         parent_klass = Object.module_eval("::#{assoc.class_name}", __FILE__, __LINE__)
 
         self.class.send(
           :include,
           Module.new {
-						if assoc.macro.to_s =~ /^has/
-							parent_method = assoc.macro.to_s =~ /^has_one/ ? 'first_with_destroyed' : 'all_with_destroyed'
-							                                            # Example:
-	            define_method name do |*args|               # def android_with_destroyed
-	              parent_klass.send("#{parent_method}",     #   Android.all_with_destroyed(
-	                :conditions => {                        #     :conditions => {
-	                  assoc.foreign_key =>                  #       :person_id =>
-	                    self.send(parent_klass.primary_key) #         self.send(:id)
-	                }                                       #     }
-	              )                                         #   )
-	            end                                         # end
-
-						else
-                                                          # Example:
-	            define_method name do |*args|               # def android_with_destroyed
-	              parent_klass.first_with_destroyed(        #   Android.first_with_destroyed(
-	                :conditions => {                        #     :conditions => {
-	                  parent_klass.primary_key =>           #       :id =>
-	                    self.send(assoc.foreign_key)        #         self.send(:android_id)
-	                }                                       #     }
-	              )                                         #   )
-	            end                                         # end
-						end
+            if assoc.macro.to_s =~ /^has/
+              define_method name do |*|
+                result = parent_klass.unscoped.where(assoc.foreign_key => self.send(parent_klass.primary_key))
+                assoc.macro.to_s =~ /^has_one/ ? result.first : result.to_a
+              end
+            else
+              define_method name do |*|
+                parent_klass.unscoped.where(
+                  parent_klass.primary_key => self.send(assoc.foreign_key)
+                ).first
+              end
+            end
           }
         )
         self.send(name, *args, &block)
@@ -267,10 +281,17 @@ module IsParanoid
 
     # Mark the model deleted_at as now.
     def alt_destroy_without_callbacks
-      self.class.update_all(
-        "#{destroyed_field} = #{self.class.connection.quote(( field_destroyed.respond_to?(:call) ? field_destroyed.call : field_destroyed))}",
-        self.class.primary_key.to_sym => self.id
-      )
+      destroyed_value = field_destroyed.respond_to?(:call) ? field_destroyed.call : field_destroyed
+      if IsParanoid::RAILS_4
+        self.class.where(self.class.primary_key.to_sym => self.id).update_all(
+          destroyed_field => destroyed_value
+        )
+      else
+        self.class.update_all(
+          "#{destroyed_field} = #{self.class.connection.quote(destroyed_value)}",
+          self.class.primary_key.to_sym => self.id
+        )
+      end
       self
     end
 
@@ -280,6 +301,8 @@ module IsParanoid
     # the Model.destroy(id), we don't need to specify those methods
     # separately.
     def destroy
+      return self if @_is_paranoid_destroying
+      @_is_paranoid_destroying = true
       with_transaction_returning_status do
         destroy_with_paranoia
       end
@@ -299,9 +322,7 @@ module IsParanoid
       self.class.restore(id, options)
       self
     end
-
   end
-
 end
 
 ActiveRecord::Base.send(:extend, IsParanoid)
