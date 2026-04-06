@@ -10,6 +10,11 @@ require 'yaml'
 
 require 'rspec'
 
+RSpec.configure do |config|
+  config.expect_with(:rspec) { |c| c.syntax = :should }
+  config.mock_with(:rspec) { |c| c.syntax = :should }
+end
+
 def connect(environment)
   conf = YAML::load(File.open(File.dirname(__FILE__) + '/database.yml'))
   ActiveRecord::Base.establish_connection(conf[environment])
