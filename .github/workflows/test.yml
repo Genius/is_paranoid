@@ -2,9 +2,9 @@ name: Tests
 
 on:
   pull_request:
-    branches: [master, reece/rails-4]
+    branches: [master]
   push:
-    branches: [master, reece/rails-4]
+    branches: [master]
 
 jobs:
   test:
