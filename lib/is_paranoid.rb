@@ -69,7 +69,7 @@ module IsParanoid
             paranoid_conditions = "#{options[:through].to_s.pluralize}.#{destroyed_field} #{is_or_equals_not_destroyed}"
             original_scope = scope
             scope = -> do
-              base = original_scope ? instance_exec(&original_scope) : all
+              base = original_scope ? instance_exec(&original_scope) : where(nil)
               IsParanoid.disabled? ? base : base.where(paranoid_conditions)
             end
           end
