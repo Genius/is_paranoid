@@ -54,8 +54,7 @@ module IsParanoid
     # NOTE: this only works if is_paranoid is declared before has_many relationships.
     if IsParanoid::RAILS_4
       def has_many(association_id, *args, &extension)
-        scope = args.first.respond_to?(:call) ? args.shift : nil
-        options = args.first.is_a?(Hash) ? args.shift : {}
+        options = args.last.is_a?(Hash) ? args.last : {}
 
         through_paranoid = options.key?(:through) && begin
           klass = options[:through].to_s.classify.constantize
@@ -66,20 +65,17 @@ module IsParanoid
 
         if through_paranoid
           paranoid_conditions = "#{options[:through].to_s.pluralize}.#{destroyed_field} #{is_or_equals_not_destroyed}"
-          original_scope = scope
+          original_scope = args.first.respond_to?(:call) ? args.first : nil
           scope = -> do
             base = original_scope ? instance_exec(&original_scope) : where(nil)
             IsParanoid.disabled? ? base : base.where(paranoid_conditions)
           end
           super(association_id, scope, options, &extension)
         else
-          # Reassemble exactly what we received: a scope (if any) followed by a non-empty
-          # options hash. For the legacy single-hash form this collapses to
-          # `super(association_id, options_hash)`, keeping the hash in the `scope` slot.
-          forwarded = []
-          forwarded << scope if scope
-          forwarded << options unless options.empty?
-          super(association_id, *forwarded, &extension)
+          # Forward exactly what we received so both deprecated_finders (reads
+          # `scope`) and Rails' own has_and_belongs_to_many (passes nil scope +
+          # options) see their arguments in the position they expect.
+          super(association_id, *args, &extension)
         end
       end
     else
