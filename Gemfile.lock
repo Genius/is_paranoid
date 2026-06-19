@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    is_paranoid (0.9.6)
+    is_paranoid (0.9.7)
 
 GEM
   remote: https://gems.railslts.com/
@@ -161,7 +161,7 @@ CHECKSUMS
   hike (1.2.3) sha256=154e2f2593845e5bcd8ed2ba3092600c55c6ad8c630722857de3fdaf334ccc44
   i18n (1.14.8) sha256=285778639134865c5e0f6269e0b818256017e8cde89993fdfcbfb64d088824a5
   io-console (0.8.2) sha256=d6e3ae7a7cc7574f4b8893b4fca2162e57a825b223a177b7afa236c5ef9814cc
-  is_paranoid (0.9.6)
+  is_paranoid (0.9.7)
   journey (1.0.4) sha256=7454b8612530784000fbb17ea2df749a71b70702a0ac8ebef4a1e7f05aecc10f
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
   mail (2.5.5) sha256=1fc84a43dbd33369b4ea99f46ab4e2435028e44bb3f7ff9a70a69c62fc588f27

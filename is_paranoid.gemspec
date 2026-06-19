@@ -2,10 +2,9 @@
 
 Gem::Specification.new do |s|
   s.name = "is_paranoid"
-  s.version = "0.9.6"
+  s.version = "0.9.7"
 
   s.authors = ["Jeffrey Chupp"]
-  s.date = "2009-09-26"
   s.description = ""
   s.email = "jeff@semanticart.com"
   s.extra_rdoc_files = [
@@ -15,7 +14,7 @@ Gem::Specification.new do |s|
   s.homepage = "https://github.com/Genius/is_paranoid"
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
-  s.summary = "ActiveRecord 2.3 compatible gem allowing you to hide and restore records without actually deleting them. Yes, like acts_as_paranoid, only with less code and less complexity."
+  s.summary = "ActiveRecord 3.2/4.2 compatible gem allowing you to hide and restore records without actually deleting them. Yes, like acts_as_paranoid, only with less code and less complexity."
   s.test_files = [
     "spec/is_paranoid_spec.rb",
     "spec/models.rb",
