@@ -53,28 +53,34 @@ module IsParanoid
     # ensure that we respect the is_paranoid conditions when being loaded as a has_many :through
     # NOTE: this only works if is_paranoid is declared before has_many relationships.
     if IsParanoid::RAILS_4
-      def has_many(association_id, scope = nil, options = {}, &extension)
-        if scope.is_a?(Hash)
-          options = scope
-          scope = nil
+      def has_many(association_id, *args, &extension)
+        scope = args.first.respond_to?(:call) ? args.shift : nil
+        options = args.first.is_a?(Hash) ? args.shift : {}
+
+        through_paranoid = options.key?(:through) && begin
+          klass = options[:through].to_s.classify.constantize
+          klass.respond_to?(:destroyed_field) && klass.destroyed_field
+        rescue NameError
+          false
         end
-        if options.key?(:through)
-          through_paranoid = begin
-                               klass = options[:through].to_s.classify.constantize
-                               klass.respond_to?(:destroyed_field) && klass.destroyed_field
-                             rescue NameError
-                               false
-                             end
-          if through_paranoid
-            paranoid_conditions = "#{options[:through].to_s.pluralize}.#{destroyed_field} #{is_or_equals_not_destroyed}"
-            original_scope = scope
-            scope = -> do
-              base = original_scope ? instance_exec(&original_scope) : where(nil)
-              IsParanoid.disabled? ? base : base.where(paranoid_conditions)
-            end
+
+        if through_paranoid
+          paranoid_conditions = "#{options[:through].to_s.pluralize}.#{destroyed_field} #{is_or_equals_not_destroyed}"
+          original_scope = scope
+          scope = -> do
+            base = original_scope ? instance_exec(&original_scope) : where(nil)
+            IsParanoid.disabled? ? base : base.where(paranoid_conditions)
           end
+          super(association_id, scope, options, &extension)
+        else
+          # Reassemble exactly what we received: a scope (if any) followed by a non-empty
+          # options hash. For the legacy single-hash form this collapses to
+          # `super(association_id, options_hash)`, keeping the hash in the `scope` slot.
+          forwarded = []
+          forwarded << scope if scope
+          forwarded << options unless options.empty?
+          super(association_id, *forwarded, &extension)
         end
-        super(association_id, scope, options, &extension)
       end
     else
       def has_many(association_id, options = {}, &extension)
@@ -92,7 +98,7 @@ module IsParanoid
     # this method is called internally by Model.delete(id) and on the
     # delete method in each instance, we don't need to specify those
     # methods separately
-    def delete_all conditions = nil
+    def delete_all(...)
       IsParanoid.disable { super }
     end
 
