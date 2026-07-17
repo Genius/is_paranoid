@@ -1,0 +1,53 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        rails_version: [3, 4]
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: is_paranoid_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      BUNDLE_GEMS__RAILSLTS__COM: ${{ secrets.BUNDLE_GEMS__RAILSLTS__COM }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+
+      - name: Install dependencies (Rails ${{ matrix.rails_version }})
+        run: |
+          if [ "${{ matrix.rails_version }}" = "4" ]; then
+            BUNDLE_GEMFILE=Gemfile.next bundle install
+          else
+            bundle install
+          fi
+
+      - name: Run tests (Rails ${{ matrix.rails_version }})
+        run: |
+          if [ "${{ matrix.rails_version }}" = "4" ]; then
+            BUNDLE_GEMFILE=Gemfile.next bundle exec rake spec
+          else
+            bundle exec rake spec
+          fi
